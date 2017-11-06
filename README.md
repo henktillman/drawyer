@@ -1,8 +1,8 @@
-# drawyer# BioE/EECS C106A - Final Project - Drawyer 
+# BioE/EECS C106A - Final Project - Drawyer 
 ## Contact Information
-Stella Seo      3031829230      seo.jysk@berkeley.edu 
-Alvin Zhang     3031881529      alvinz@berkeley.edu
-Henk Tillman    3031790711      henk@berkeley.edu
+- Stella Seo      3031829230      seo.jysk@berkeley.edu 
+- Alvin Zhang     3031881529      alvinz@berkeley.edu
+- Henk Tillman    3031790711      henk@berkeley.edu
 
 ## Abstract
 Creating an interpretable visual representation of the real world is an essential task for robots if they are to be used in our everyday lives and communicate with humans. In our project, we will enable Baxter to recreate sketch-style drawings of objects and images. In addition to making bad caricatures, this project also incorporates image processing, computer vision, route planning, and actuation in creating the final drawing. We have additionally set stretch goals involving grasping, more advanced image processing, and style transfer (art!) via machine learning.
