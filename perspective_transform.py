@@ -1,7 +1,8 @@
 # import the necessary packages
 import numpy as np
-import argparse
-import cv2
+# import argparse
+from skimage.filters import threshold_adaptive
+import cv2, pdb
  
 def order_points(pts):
   # Initialize a list of coordinates that will be ordered
@@ -26,6 +27,9 @@ def order_points(pts):
   # Return the ordered coordinates.
   return rect
 
+
+# Given an image and four points, transforms the image so that the rectangle
+# defined by those points fills the view.
 def four_point_transform(image, pts):
   # Obtain a consistent order of the points and unpack them
   # individually.
@@ -64,26 +68,55 @@ def four_point_transform(image, pts):
   # return the warped image
   return warped
 
+# Given an image and a height, resizes the image to have that height and keep it's
+# current width/height ratio.
+def resize(image, height):
+  ratio = float(height) / image.shape[0]
+  dim = (int(image.shape[1] * ratio), int(height))
+  return cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", help = "path to the image file")
-ap.add_argument("-c", "--coords",
-  help = "comma seperated list of source points")
-args = vars(ap.parse_args())
+
+image = cv2.imread("./test.jpg")
+ratio = image.shape[0] / 700.0
+orig = image.copy()
+image = resize(image, 700)
+
+# convert the image to grayscale, blur it, and find edges
+# in the image
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+gray = cv2.GaussianBlur(gray, (5, 5), 0)
+edged = cv2.Canny(gray, 75, 200)
+
+# find the contours in the edged image, keeping only the
+# largest ones, and initialize the screen contour
+(_, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:5]
  
-# load the image and grab the source coordinates (i.e. the list of
-# of (x, y) points)
-# NOTE: using the 'eval' function is bad form, but for this example
-# let's just roll with it -- in future posts I'll show you how to
-# automatically determine the coordinates without pre-supplying them
-image = cv2.imread(args["image"])
-pts = np.array(eval(args["coords"]), dtype = "float32")
+# loop over the contours
+for c in cnts:
+  # approximate the contour
+  peri = cv2.arcLength(c, True)
+  approx = cv2.approxPolyDP(c, 0.02 * peri, True)
  
-# apply the four point tranform to obtain a "birds eye view" of
-# the image
-warped = four_point_transform(image, pts)
+  # if our approximated contour has four points, then we
+  # can assume that we have found our screen
+  if len(approx) == 4:
+    screenCnt = approx
+    break
  
-# show the original and warped images
-cv2.imshow("Original", image)
-cv2.imshow("Warped", warped)
+# apply the four point transform to obtain a top-down
+# view of the original image
+# pdb.set_trace()
+warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
+
+# convert the warped image to grayscale, then threshold it
+# to give it that 'black and white' paper effect
+warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
+warped = threshold_adaptive(warped, 251, offset = 10)
+warped = warped.astype("uint8") * 255
+ 
+# show the original and scanned images
+cv2.imshow("Original", resize(orig, 700))
+cv2.imshow("Scanned", resize(warped, 700))
 cv2.waitKey(0)
+cv2.destroyAllWindows()
