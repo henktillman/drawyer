@@ -1,8 +1,7 @@
-# import the necessary packages
 import numpy as np
-# import argparse
 from skimage.filters import threshold_adaptive
 import cv2, pdb
+import math
  
 def order_points(pts):
   # Initialize a list of coordinates that will be ordered
@@ -91,19 +90,19 @@ edged = cv2.Canny(gray, 75, 200)
 # largest ones, and initialize the screen contour
 (_, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:5]
- 
+  
 # loop over the contours
 for c in cnts:
   # approximate the contour
   peri = cv2.arcLength(c, True)
   approx = cv2.approxPolyDP(c, 0.02 * peri, True)
- 
+  
   # if our approximated contour has four points, then we
   # can assume that we have found our screen
   if len(approx) == 4:
     screenCnt = approx
     break
- 
+  
 # apply the four point transform to obtain a top-down
 # view of the original image
 # pdb.set_trace()
@@ -112,11 +111,45 @@ warped = four_point_transform(orig, screenCnt.reshape(4, 2) * ratio)
 # convert the warped image to grayscale, then threshold it
 # to give it that 'black and white' paper effect
 warped = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY)
-warped = threshold_adaptive(warped, 251, offset = 10)
+warped = threshold_adaptive (warped, 251, offset = 10)
 warped = warped.astype("uint8") * 255
- 
-# show the original and scanned images
-cv2.imshow("Original", resize(orig, 700))
-cv2.imshow("Scanned", resize(warped, 700))
+
+# blur and rethreshold to get the cleanest possible delineation
+gray = cv2.GaussianBlur(warped, (25, 25), 10)
+gray = resize(gray, 700)
+gray = threshold_adaptive(gray, 251, offset = 80)
+gray = gray.astype("uint8") * 255
+
+# remove the surrounding 10 pixels (to remove the black from the border)
+# Image is now 680 by 906
+gray = gray[10:len(gray)-10, 10:len(gray[0])-10]
+
+
+# Next step is to split the image into blocks, each represented by a 1 (indicating
+# that in the final image the robot should have put a mark there) or a 0 (whitespace).
+# This is the side length of the square block in pixels.
+BLOCK_SIZE = 10
+# Percentage of pixels which need to be black in order for the block to be classified
+# as a 1.
+THRESHOLD_RATIO = 0.5
+
+chunks_per_col = int(math.ceil(float(gray.shape[0]) / float(BLOCK_SIZE)))
+chunks_per_row = int(math.ceil(float(gray.shape[1]) / float(BLOCK_SIZE)))
+
+chunkified = np.zeros((chunks_per_col, chunks_per_row))
+
+for row in range(0, chunks_per_col):
+  for col in range(0, chunks_per_row):
+    block = gray[row*BLOCK_SIZE:(row+1)*BLOCK_SIZE, col*BLOCK_SIZE:(col+1)*BLOCK_SIZE]
+    num_black_pixels = sum([sum([1 if x == 0 else 0 for x in block_row]) for block_row in block])
+    if float(num_black_pixels) / float(BLOCK_SIZE**2) >= THRESHOLD_RATIO:
+      chunkified[row][col] = 1
+
+for row in chunkified:
+  row = [' ' if x == 0 else '*' for x in row]
+  print(''.join(row))
+
+pdb.set_trace()
+cv2.imshow("Black and white:", gray)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
