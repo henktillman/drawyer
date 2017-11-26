@@ -67,7 +67,8 @@ def four_point_transform(image, pts):
   # return the warped image
   return warped
 
-# Given an image and a height, resizes the image to have that height and keep it's
+
+# Given an image and a height, resizes the image to have that height and keep its
 # current width/height ratio.
 def resize(image, height):
   ratio = float(height) / image.shape[0]
@@ -75,7 +76,7 @@ def resize(image, height):
   return cv2.resize(image, dim, interpolation = cv2.INTER_AREA)
 
 
-# Given an image filepath, a desired block size, and a ratio of black pixels to total
+# Inputs: an image filepath, a desired block size, and a ratio of black pixels to total
 # pixels which qualifies a block as a 1. Resizes, frames, and thresholds the image
 # to be a clean black-and-white isolation of the drawing. Divides the image into chunks
 # and uses the given ratio to map the image to a 2D array of 1's and 0's corresponding
@@ -158,11 +159,86 @@ def image_to_binary_map(filepath, block_size, threshold_ratio):
   return chunkified
 
 
+# Returns the first set of unvisited pixels/coordinates.
+# We only call this helper when we know that there exist some unvisited coordinates.
+def unvisited_pixels_helper(image):
+  for row in range(len(image)):
+    for col in range(len(image[0])):
+      if image[row][col]:
+        return (row, col)
+
+# Marks every pixel within a block_size radius of coords as visited within image.
+# Returns the modified image.
+def mark_pixels_as_visited_helper(image, coords, block_size):
+
+
+# Finds unvisited pixel coordinates within a (block_size + 1) radius of coords within image.
+# Returns this set of coordinates if found, None otherwise.
+def find_connecting_block_helper(image, coords, block_size):
+
+# Inputs: image is a binary map of the inputted photo, block_size is the number of pixels
+# left, right, up, and down that should count as visited when a central pixel is included
+# in a path.
+# Outputs a list of lists, where each sublist is a contiguous curve that baxter needs
+# to draw. The curve is defined by a series of 2D coordinates in order of how baxter
+# should visit them to accurately recreate the curve.
+def binary_map_to_path(image, block_size):
+  # # 2D array of booleans indicating whether or not we have visited a particular set of coordinates.
+  # # 1 = visited, 0 = unvisited.
+  # visited = np.zeros(image.shape)
+
+
+
+  # A list of lists, where each sublist is a curve that baxter should draw.
+  paths = []
+
+  # Modify the image binary map by setting coordinates to zero if we have visited them.
+  # Blank space is initialized as visited.
+  # Continue generating curves until we have mapped the entire line drawing.
+  while any([any(row) for row in image]):
+    curve = []
+
+    # Find the unvisited pixels. While loop already catches null case.
+    current = unvisited_pixels_helper()
+    # Starting point for the new curve.
+    curve.append(current)
+
+    while True:
+      # Mark every pixel within a block_size radius of current as visited.
+      image = mark_pixels_as_visited_helper(image, current, block_size)
+
+      # Find an unvisited pixel with a (block_size + 1) radius of current.
+      # Priority: north, east, south, west.
+      next_pixel = find_connecting_block_helper(image, current, block_size)
+
+      # Break from the loop if no such pixel is found.
+      if not next_pixel:
+        break
+
+      # Add the new coordinates to the curve and set current to the new coordinates.
+      curve.append(next_pixel)
+      current = next_pixel
+
+    # Only add the path to the list of paths if it contains more than one point.
+    # This eliminates noise from pixels which aren't caught by our greedy blocking approach.
+    if len(curve) == 1:
+      continue
+
+    # Euclidean distance between the first point in the curve and the last point in the curve.
+    distance = ((curve[0][0] - curve[-1][0])**2 + (curve[0][1] - curve[-1][1])**2)**0.5
+
+    # If the first and last points are sufficiently close, then we should add the first point to
+    # the end of the curve in order to close the loop.
+    if distance < 2 * block_size and len(curve) >= 3:
+      curve.append(curve[0])
+
+
+
+
+
 binary_map = image_to_binary_map("./test.jpg", 7, 0.4)
 
-# cv2.imshow("Black and white:", gray)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+
 
 
 
