@@ -170,7 +170,16 @@ def unvisited_pixels_helper(image):
 # Marks every pixel within a block_size radius of coords as visited within image.
 # Returns the modified image.
 def mark_pixels_as_visited_helper(image, coords, block_size):
+  mod_image = image.copy()
+  # The top right and bottom left coordinates of the block, thresholded by the bounds of the image.
+  top_left = (max(0, coords[0] - block_size), max(0, coords[1] - block_size))
+  bottom_right = (min(image.shape[0], coords[0] + block_size + 1), min(image.shape[1], coords[1] + block_size + 1))
 
+  # Mark each pixel in the block defined by the top right and bottom left coordinates as visited.
+  for row in range(top_left[0], bottom_right[0]):
+    for col in range(top_left[1], bottom_right[1]):
+      mod_image[row][col] = 0
+  return mod_image
 
 # Finds unvisited pixel coordinates within a (block_size + 1) radius of coords within image.
 # Returns this set of coordinates if found, None otherwise.
