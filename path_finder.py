@@ -2,6 +2,7 @@ import numpy as np
 from skimage.filters import threshold_adaptive
 import cv2, pdb
 import math
+import pickle
  
 def order_points(pts):
   # Initialize a list of coordinates that will be ordered
@@ -148,10 +149,10 @@ def image_to_binary_map(filepath, block_size, threshold_ratio):
       if float(num_black_pixels) / float(block_size**2) >= threshold_ratio:
         chunkified[row][col] = 1
 
-  # For visualizing the binary map:
-  for row in chunkified:
-    row = [' ' if x == 0 else '*' for x in row]
-    print(''.join(row))
+  # # For visualizing the binary map:
+  # for row in chunkified:
+  #   row = [' ' if x == 0 else '*' for x in row]
+  #   print(''.join(row))
 
   # cv2.imshow("Outline", chunkified)
   # cv2.waitKey(0)
@@ -281,7 +282,8 @@ for p in path:
 for row in foo:
   print(''.join(row))
 
-pdb.set_trace()
+with open('path.pickle', 'wb') as handle:
+    pickle.dump(path, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 
