@@ -7,7 +7,58 @@ from geometry_msgs.msg import PoseStamped
 from baxter_interface import gripper as robot_gripper
 import pickle, pdb
 
+
+
+def move_to_point(arm, point):
+  rospy.sleep(1.0)
+  goal = PoseStamped()
+  goal.header.frame_id = "base"
+
+  #x, y, and z position
+  goal.pose.position.x = point[0]
+  goal.pose.position.y = point[1] 
+  goal.pose.position.z = point[2]
+  
+  #Orientation as a quaternion
+  goal.pose.orientation.x = 0.0
+  goal.pose.orientation.y = -1.0
+  goal.pose.orientation.z = 0.0
+  goal.pose.orientation.w = 0.0
+
+  #Set the goal state to the pose you just defined
+  arm.set_pose_target(goal)
+  #Set the start state for the right arm
+  arm.set_start_state_to_current_state()
+
+  # #Create a path constraint for the arm
+  # #UNCOMMENT TO ENABLE ORIENTATION CONSTRAINTS
+  orien_const = OrientationConstraint()
+
+  # change to left if using baxter's left arm
+  orien_const.link_name = "right_gripper";
+  orien_const.header.frame_id = "base";
+  orien_const.orientation.y = -1.0;
+  orien_const.absolute_x_axis_tolerance = 0.1;
+  orien_const.absolute_y_axis_tolerance = 0.1;
+  orien_const.absolute_z_axis_tolerance = 0.1;
+  orien_const.weight = 1.0;
+  consts = Constraints()
+  consts.orientation_constraints = [orien_const]
+  arm.set_path_constraints(consts)
+
+  #Plan a path
+  plan = arm.plan()
+
+  #Execute the plan
+  raw_input('Press <Enter> to move the arm to the next pose: ')
+  arm.execute(plan)
+
+
 def main():
+  # Load the top left and bottom right rectangle coordinates.
+  with open('calibration.pickle', 'rb') as handle:
+    calibration_coords = pickle.load(handle)
+
   #Initialize moveit_commander
   moveit_commander.roscpp_initialize(sys.argv)
 
@@ -19,7 +70,7 @@ def main():
   scene = moveit_commander.PlanningSceneInterface()
   # Uncomment if you need to use baxter's left arm. Sawyer's arm is right by default.
   # left_arm = moveit_commander.MoveGroupCommander('left_arm')
-  
+
   right_arm = moveit_commander.MoveGroupCommander('right_arm')
 
   # left_arm.set_planner_id('RRTConnectkConfigDefault')
@@ -31,7 +82,9 @@ def main():
   right_gripper.calibrate()
   rospy.sleep(2.0)
 
-  #First goal pose ------------------------------------------------------
+  ##########################################################################################################
+  #Direct the arm to the first coordinate in the path ------------------------------------------------------
+  ##########################################################################################################
   goal_1 = PoseStamped()
   goal_1.header.frame_id = "base"
 
@@ -58,121 +111,24 @@ def main():
   #Execute the plan
   raw_input('Press <Enter> to move the right arm to goal pose 1 (path constraints are never enforced during this motion): ')
   right_arm.execute(right_plan)
-  #open the right gripper
-  print('Closing...')
-  right_gripper.open()
-  rospy.sleep(1.0)
+
+  ##########################################################################################################
+  #Give the robot the gripper (uncomment if already done) --------------------------------------------------
+  ##########################################################################################################
 
   #Open the right gripper
   print('Opening...')
+  right_gripper.open()
+  rospy.sleep(1.0)
+
+  raw_input('Place the block in the gripper and then press <Enter> to grip the block...')
+
+  #Close the right gripper
+  print('Closing...')
   right_gripper.close()
   rospy.sleep(1.0)
   print('Done!')
 
-  #Second goal pose -----------------------------------------------------
-  rospy.sleep(2.0)
-  goal_2 = PoseStamped()
-  goal_2.header.frame_id = "base"
 
-  #x, y, and z position
-  goal_2.pose.position.x = 0.6
-  goal_2.pose.position.y = -0.3
-  goal_2.pose.position.z = 0.0
-  
-  #Orientation as a quaternion
-  goal_2.pose.orientation.x = 0.0
-  goal_2.pose.orientation.y = -1.0
-  goal_2.pose.orientation.z = 0.0
-  goal_2.pose.orientation.w = 0.0
-
-  #Set the goal state to the pose you just defined
-  right_arm.set_pose_target(goal_2)
-
-  #Set the start state for the right arm
-  right_arm.set_start_state_to_current_state()
-
-  # #Create a path constraint for the arm
-  # #UNCOMMENT TO ENABLE ORIENTATION CONSTRAINTS
-  orien_const = OrientationConstraint()
-  orien_const.link_name = "right_gripper";
-  orien_const.header.frame_id = "base";
-  orien_const.orientation.y = -1.0;
-  orien_const.absolute_x_axis_tolerance = 0.1;
-  orien_const.absolute_y_axis_tolerance = 0.1;
-  orien_const.absolute_z_axis_tolerance = 0.1;
-  orien_const.weight = 1.0;
-  consts = Constraints()
-  consts.orientation_constraints = [orien_const]
-  right_arm.set_path_constraints(consts)
-
-  #Plan a path
-  right_plan = right_arm.plan()
-
-  #Execute the plan
-  raw_input('Press <Enter> to move the right arm to goal pose 2: ')
-  right_arm.execute(right_plan)
-  #open the right gripper
-  print('Closing...')
-  right_gripper.open()
-  rospy.sleep(1.0)
-
-  #Open the right gripper
-  print('Opening...')
-  right_gripper.close()
-  rospy.sleep(1.0)
-  print('Done!')
-
-  #Third goal pose -----------------------------------------------------
-  rospy.sleep(2.0)
-  goal_3 = PoseStamped()
-  goal_3.header.frame_id = "base"
-
-  #x, y, and z position
-  goal_3.pose.position.x = 0.6
-  goal_3.pose.position.y = -0.1
-  goal_3.pose.position.z = 0.1
-  
-  #Orientation as a quaternion
-  goal_3.pose.orientation.x = 0.0
-  goal_3.pose.orientation.y = -1.0
-  goal_3.pose.orientation.z = 0.0
-  goal_3.pose.orientation.w = 0.0
-
-  #Set the goal state to the pose you just defined
-  right_arm.set_pose_target(goal_3)
-
-  #Set the start state for the right arm
-  right_arm.set_start_state_to_current_state()
-
-  # #Create a path constraint for the arm
-  # #UNCOMMENT TO ENABLE ORIENTATION CONSTRAINTS
-  orien_const = OrientationConstraint()
-  orien_const.link_name = "right_gripper";
-  orien_const.header.frame_id = "base";
-  orien_const.orientation.y = -1.0;
-  orien_const.absolute_x_axis_tolerance = 0.1;
-  orien_const.absolute_y_axis_tolerance = 0.1;
-  orien_const.absolute_z_axis_tolerance = 0.1;
-  orien_const.weight = 1.0;
-  consts = Constraints()
-  consts.orientation_constraints = [orien_const]
-  right_arm.set_path_constraints(consts)
-
-  #Plan a path
-  right_plan = right_arm.plan()
-
-  #Execute the plan
-  raw_input('Press <Enter> to move the right arm to goal pose 3: ')
-  right_arm.execute(right_plan)
-  #open the right gripper
-  print('Closing...')
-  right_gripper.open()
-  rospy.sleep(1.0)
-
-  #Open the right gripper
-  print('Opening...')
-  right_gripper.close()
-  rospy.sleep(1.0)
-  print('Done!')
 if __name__ == '__main__':
   main()
