@@ -173,17 +173,37 @@ def mark_pixels_as_visited_helper(image, coords, block_size):
   mod_image = image.copy()
   # The top right and bottom left coordinates of the block, thresholded by the bounds of the image.
   top_left = (max(0, coords[0] - block_size), max(0, coords[1] - block_size))
-  bottom_right = (min(image.shape[0], coords[0] + block_size + 1), min(image.shape[1], coords[1] + block_size + 1))
-
+  bottom_right = (min(image.shape[0], coords[0] + block_size), min(image.shape[1], coords[1] + block_size))
   # Mark each pixel in the block defined by the top right and bottom left coordinates as visited.
-  for row in range(top_left[0], bottom_right[0]):
-    for col in range(top_left[1], bottom_right[1]):
+  for row in range(top_left[0], bottom_right[0] + 1):
+    for col in range(top_left[1], bottom_right[1] + 1):
       mod_image[row][col] = 0
   return mod_image
 
 # Finds unvisited pixel coordinates within a (block_size + 1) radius of coords within image.
 # Returns this set of coordinates if found, None otherwise.
+# Prioritizes North, East, South, and then West.
 def find_connecting_block_helper(image, coords, block_size):
+  # The top right and bottom left coordinates of the search ring, thresholded by the bounds of the image.
+  top_left = (max(0, coords[0] - block_size - 1), max(0, coords[1] - block_size - 1))
+  bottom_right = (min(image.shape[0], coords[0] + block_size + 1), min(image.shape[1], coords[1] + block_size + 1))
+  # North face of the square ring.
+  for col in range(top_left[1], bottom_right[1] + 1):
+    if image[top_left[0]][col]:
+      return (top_left[0], col)
+  # East face of the square ring.
+  for row in range(top_left[0], bottom_right[0] + 1):
+    if image[row][bottom_right[1]]:
+      return (row, bottom_right[1])
+  # South face of the square ring.
+  for col in range(top_left[1], bottom_right[1] + 1):
+    if image[bottom_right[0]][col]:
+      return (bottom_right[0], col)
+  # West face of the square ring.
+  for row in range(top_left[0], bottom_right[0] + 1):
+    if image[row][top_left[1]]:
+      return (row, top_left[1])
+  return None
 
 # Inputs: image is a binary map of the inputted photo, block_size is the number of pixels
 # left, right, up, and down that should count as visited when a central pixel is included
@@ -192,12 +212,6 @@ def find_connecting_block_helper(image, coords, block_size):
 # to draw. The curve is defined by a series of 2D coordinates in order of how baxter
 # should visit them to accurately recreate the curve.
 def binary_map_to_path(image, block_size):
-  # # 2D array of booleans indicating whether or not we have visited a particular set of coordinates.
-  # # 1 = visited, 0 = unvisited.
-  # visited = np.zeros(image.shape)
-
-
-
   # A list of lists, where each sublist is a curve that baxter should draw.
   paths = []
 
@@ -240,8 +254,6 @@ def binary_map_to_path(image, block_size):
     # the end of the curve in order to close the loop.
     if distance < 2 * block_size and len(curve) >= 3:
       curve.append(curve[0])
-
-
 
 
 
