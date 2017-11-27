@@ -184,9 +184,10 @@ def mark_pixels_as_visited_helper(image, coords, block_size):
 # Returns this set of coordinates if found, None otherwise.
 # Prioritizes North, East, South, and then West.
 def find_connecting_block_helper(image, coords, block_size):
+  slack = 2
   # The top right and bottom left coordinates of the search ring, thresholded by the bounds of the image.
-  top_left = (max(0, coords[0] - block_size - 1), max(0, coords[1] - block_size - 1))
-  bottom_right = (min(image.shape[0], coords[0] + block_size + 1), min(image.shape[1], coords[1] + block_size + 1))
+  top_left = (max(0, coords[0] - block_size - slack), max(0, coords[1] - block_size - slack))
+  bottom_right = (min(image.shape[0], coords[0] + block_size + slack), min(image.shape[1], coords[1] + block_size + slack))
   # North face of the square ring.
   for col in range(top_left[1], bottom_right[1] + 1):
     if image[top_left[0]][col]:
@@ -222,7 +223,7 @@ def binary_map_to_path(image, block_size):
     curve = []
 
     # Find the unvisited pixels. While loop already catches null case.
-    current = unvisited_pixels_helper()
+    current = unvisited_pixels_helper(image)
     # Starting point for the new curve.
     curve.append(current)
 
@@ -252,16 +253,35 @@ def binary_map_to_path(image, block_size):
 
     # If the first and last points are sufficiently close, then we should add the first point to
     # the end of the curve in order to close the loop.
-    if distance < 2 * block_size and len(curve) >= 3:
+    if distance < 4 * block_size and len(curve) >= 3:
       curve.append(curve[0])
+
+    paths.append(curve)
+  return paths
 
 
 
 binary_map = image_to_binary_map("./test.jpg", 7, 0.4)
+printable = binary_map.copy()
+path = binary_map_to_path(binary_map, 3)
 
+foo = []
+for i in range(len(printable)):
+  foo.append([])
+  for j in range(len(printable[0])):
+    if printable[i][j] == 0:
+      foo[-1].append(' ')
+    else:
+      foo[-1].append('.')
 
+for p in path:
+  for coord in p:
+    foo[coord[0]][coord[1]] = '*'
 
+for row in foo:
+  print(''.join(row))
 
+pdb.set_trace()
 
 
 
