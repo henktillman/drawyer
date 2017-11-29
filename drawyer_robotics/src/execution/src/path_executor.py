@@ -15,7 +15,7 @@ def map_paths_to_robot_coordinates(paths, top_left, bottom_right):
   x_range = top_left[0] - bottom_right[0]
   y_range = top_left[1] - bottom_right[1]
 
-  with open('paper_dimensions.pickle', 'rb') as handle:
+  with open('../../../../paper_dimensions.pickle', 'rb') as handle:
     paper_dimensions = pickle.load(handle)
 
   x_scale = x_range / paper_dimensions[0] # number of robot units per paper units in x direction
@@ -82,7 +82,7 @@ def main():
   #Calibration data ----------------------------------------------------------------------------------------
   ##########################################################################################################
   # Load the top left and bottom right rectangle coordinates.
-  with open('calibration.pickle', 'rb') as handle:
+  with open('../../../../calibration.pickle', 'rb') as handle:
     calibration_coords = pickle.load(handle)
   top_left = calibration_coords[0]
   bottom_left = calibration_coords[1]
@@ -91,7 +91,7 @@ def main():
   gap = 0.1
 
   # Load the path which dictates the image we should draw.
-  with open('path.pickle', 'rb') as handle:
+  with open('../../../../path.pickle', 'rb') as handle:
     paths = pickle.load(handle)
 
   paths = map_paths_to_robot_coordinates(paths, top_left, bottom_right)
