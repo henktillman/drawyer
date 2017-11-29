@@ -18,7 +18,7 @@ def get_paper_corners():
     if abs(top_left[2] - bottom_right[2]) > 0.05:
         raise Exception("ERROR: top_left z-coord must be close (<5cm) to bottom_right z-coord.")
 
-    pickle.dump((top_left, bottom_right), "coordinates.pickle")
+    pickle.dump((top_left, bottom_right), "calibration.pickle")
 
     return (top_left, bottom_right)
 
