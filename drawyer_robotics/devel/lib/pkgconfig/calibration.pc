@@ -1,0 +1,8 @@
+prefix=/home/cc/ee106a/fa17/class/ee106a-aad/ros_workspaces/drawyer/drawyer_robotics/devel
+
+Name: calibration
+Description: Description of calibration
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/cc/ee106a/fa17/class/ee106a-aad/ros_workspaces/drawyer/drawyer_robotics/devel/lib 
+Requires: 
