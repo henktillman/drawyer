@@ -55,10 +55,22 @@ def move_to_point(arm, point):
 
 
 def main():
+  ##########################################################################################################
+  #Calibration data ----------------------------------------------------------------------------------------
+  ##########################################################################################################
   # Load the top left and bottom right rectangle coordinates.
   with open('calibration.pickle', 'rb') as handle:
     calibration_coords = pickle.load(handle)
+  top_left = calibration_coords[0]
+  bottom_left = calibration_coords[1]
+  # This constant represents how far above the paper (in z coordinates) the end effector should be when
+  # is is not drawing a curve.
+  gap = 0.1
 
+
+  ##########################################################################################################
+  #Robot arm initialization and calibration ----------------------------------------------------------------
+  ##########################################################################################################
   #Initialize moveit_commander
   moveit_commander.roscpp_initialize(sys.argv)
 
@@ -83,15 +95,15 @@ def main():
   rospy.sleep(2.0)
 
   ##########################################################################################################
-  #Direct the arm to the first coordinate in the path ------------------------------------------------------
+  #Direct the arm to a neutral position above the paper ----------------------------------------------------
   ##########################################################################################################
   goal_1 = PoseStamped()
   goal_1.header.frame_id = "base"
 
   #x, y, and z position
-  goal_1.pose.position.x = 0.2
-  goal_1.pose.position.y = -0.3
-  goal_1.pose.position.z = 0.2
+  goal_1.pose.position.x = top_left[0]
+  goal_1.pose.position.y = top_left[1]
+  goal_1.pose.position.z = top_left[1] + 0.3 # clearly raise it above the paper
   
   #Orientation as a quaternion
   goal_1.pose.orientation.x = 0.0
@@ -109,11 +121,11 @@ def main():
   right_plan = right_arm.plan()
 
   #Execute the plan
-  raw_input('Press <Enter> to move the right arm to goal pose 1 (path constraints are never enforced during this motion): ')
+  raw_input('Press <Enter> to move the arm to the starting position')
   right_arm.execute(right_plan)
 
   ##########################################################################################################
-  #Give the robot the gripper (uncomment if already done) --------------------------------------------------
+  #Give the robot the gripper (comment if already done) ----------------------------------------------------
   ##########################################################################################################
 
   #Open the right gripper
@@ -128,6 +140,8 @@ def main():
   right_gripper.close()
   rospy.sleep(1.0)
   print('Done!')
+
+
 
 
 if __name__ == '__main__':
