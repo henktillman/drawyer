@@ -1,2 +1,2 @@
-calibration
+calibration:execution
 -DCATKIN_DEVEL_PREFIX=/home/cc/ee106a/fa17/class/ee106a-aad/ros_workspaces/drawyer/drawyer_robotics/devel -DCMAKE_INSTALL_PREFIX=/home/cc/ee106a/fa17/class/ee106a-aad/ros_workspaces/drawyer/drawyer_robotics/install -G Unix Makefiles

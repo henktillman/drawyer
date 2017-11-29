@@ -96,7 +96,7 @@ def image_to_binary_map(filepath, block_size, threshold_ratio):
 
   # find the contours in the edged image, keeping only the
   # largest ones, and initialize the screen contour
-  (_, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+  (cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
   cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:5]
     
   # loop over the contours
@@ -262,7 +262,7 @@ def binary_map_to_path(image, block_size):
 
 
 
-binary_map = image_to_binary_map("./test.jpg", 7, 0.4)
+binary_map = image_to_binary_map("test.jpg", 7, 0.4)
 printable = binary_map.copy()
 path = binary_map_to_path(binary_map, 3)
 
