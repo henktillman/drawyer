@@ -283,9 +283,10 @@ for row in foo:
   print(''.join(row))
 
 with open('path.pickle', 'wb') as handle:
-    pickle.dump(path, handle, protocol=pickle.HIGHEST_PROTOCOL)
+  pickle.dump(path, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-
+with open('paper_dimensions.pickle', 'wb') as handle:
+  pickle.dump(binary_map.shape, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
   # gray = cv2.cvtColor(gray,cv2.COLOR_GRAY2RGB)
   # gray = cv2.Canny(gray,50,150,apertureSize = 3)

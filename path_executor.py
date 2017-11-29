@@ -8,8 +8,30 @@ from baxter_interface import gripper as robot_gripper
 import pickle, pdb
 
 
+# Given the paths in the paper coordinates (generated from path_finder.py) and the calibration coordinates,
+# transforms the path points to points in the robot frame.
+def map_paths_to_robot_coordinates(paths, top_left, bottom_right):
+  z_coord = (top_left[2] + bottom_right[2]) / 2.0
+  x_range = top_left[0] - bottom_right[0]
+  y_range = top_left[1] - bottom_right[1]
 
-def move_to_point(arm, point):
+  with open('paper_dimensions.pickle', 'rb') as handle:
+    paper_dimensions = pickle.load(handle)
+
+  x_scale = x_range / paper_dimensions[0] # number of robot units per paper units in x direction
+  y_scale = y_range / paper_dimensions[1] # number of robot units per paper units in x direction
+
+  mod_paths = []
+  for path in paths:
+    new_path = []
+    for point in path:
+      new_x = top_left[0] + x_scale * point[0]
+      new_y = top_left[1] + y_scale * point[1]
+      new_path.append((new_x, new_y, z_coord))
+    mod_paths.append(new_path)
+  return mod_paths
+
+def move_to_point(arm, point, wait = False):
   rospy.sleep(1.0)
   goal = PoseStamped()
   goal.header.frame_id = "base"
@@ -49,8 +71,9 @@ def move_to_point(arm, point):
   #Plan a path
   plan = arm.plan()
 
-  #Execute the plan
-  raw_input('Press <Enter> to move the arm to the next pose: ')
+  #Execute the plan. Only wait if we have specified that option.
+  if wait:
+    raw_input('Press <Enter> to move the arm to the next pose: ')
   arm.execute(plan)
 
 
@@ -66,6 +89,12 @@ def main():
   # This constant represents how far above the paper (in z coordinates) the end effector should be when
   # is is not drawing a curve.
   gap = 0.1
+
+  # Load the path which dictates the image we should draw.
+  with open('path.pickle', 'rb') as handle:
+    paths = pickle.load(handle)
+
+  paths = map_paths_to_robot_coordinates(paths, top_left, bottom_right)
 
 
   ##########################################################################################################
@@ -103,7 +132,7 @@ def main():
   #x, y, and z position
   goal_1.pose.position.x = top_left[0]
   goal_1.pose.position.y = top_left[1]
-  goal_1.pose.position.z = top_left[1] + 0.3 # clearly raise it above the paper
+  goal_1.pose.position.z = top_left[1] + gap # clearly raise it above the paper
   
   #Orientation as a quaternion
   goal_1.pose.orientation.x = 0.0
@@ -142,7 +171,17 @@ def main():
   print('Done!')
 
 
-
+  ##########################################################################################################
+  #Execute the path! ---------------------------------------------------------------------------------------
+  ##########################################################################################################
+  for path in paths:
+    # Visit every point in the path. After reaching the last point, raise the end effector so that
+    # it does not draw while it moves to the next path.
+    for point in path:
+      move_to_point(arm, point)
+    last_point = path[-1]
+    last_point[2] += gap
+    move_to_point(arm, point, wait = True)
 
 if __name__ == '__main__':
   main()
