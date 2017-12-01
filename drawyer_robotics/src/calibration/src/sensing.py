@@ -12,7 +12,7 @@ def get_marker_pos(marker_length=0.15):
     rospy.sleep(1.0)
 
     try:
-        tform = buf.lookup_transform('reference/left_gripper', 'reference/base', rospy.Time(0), timeout=rospy.Duration(4))
+        tform = buf.lookup_transform('reference/right_gripper', 'reference/base', rospy.Time(0), timeout=rospy.Duration(4))
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
         return e
 
