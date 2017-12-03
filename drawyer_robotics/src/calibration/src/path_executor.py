@@ -12,8 +12,8 @@ import pickle, pdb
 # transforms the path points to points in the robot frame.
 def map_paths_to_robot_coordinates(paths, top_left, bottom_right):
   z_coord = (top_left[2] + bottom_right[2]) / 2.0
-  x_range = top_left[0] - bottom_right[0]
-  y_range = top_left[1] - bottom_right[1]
+  x_range = bottom_right[0] - top_left[0]
+  y_range = bottom_right[1] - top_left[1]
 
   with open('paper_dimensions.pickle', 'rb') as handle:
     paper_dimensions = pickle.load(handle)
