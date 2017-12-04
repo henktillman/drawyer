@@ -4,7 +4,8 @@ import rospy
 import moveit_commander
 from moveit_msgs.msg import OrientationConstraint, Constraints
 from geometry_msgs.msg import PoseStamped
-from baxter_interface import gripper as robot_gripper
+# from baxter_interface import gripper as robot_gripper
+from intera_interface import gripper as robot_gripper
 import pickle, pdb
 
 
@@ -12,8 +13,8 @@ import pickle, pdb
 # transforms the path points to points in the robot frame.
 def map_paths_to_robot_coordinates(paths, top_left, bottom_right):
   z_coord = (top_left[2] + bottom_right[2]) / 2.0
-  x_range = bottom_right[0] - top_left[0]
-  y_range = bottom_right[1] - top_left[1]
+  x_range = abs(bottom_right[0] - top_left[0])
+  y_range = abs(bottom_right[1] - top_left[1])
 
   with open('paper_dimensions.pickle', 'rb') as handle:
     paper_dimensions = pickle.load(handle)
@@ -25,21 +26,20 @@ def map_paths_to_robot_coordinates(paths, top_left, bottom_right):
   for path in paths:
     new_path = []
     for point in path:
-      new_x = top_left[0] + x_scale * point[0]
-      new_y = top_left[1] + y_scale * point[1]
+      new_x = min(top_left[0], bottom_right[0]) + x_scale * point[0]
+      new_y = min(top_left[1], bottom_right[1]) + y_scale * point[1]
       new_path.append((new_x, new_y, z_coord))
     mod_paths.append(new_path)
   return mod_paths
 
 def move_to_point(arm, point, wait = False):
-  rospy.sleep(.1)
   goal = PoseStamped()
   goal.header.frame_id = "base"
 
   #x, y, and z position
   goal.pose.position.x = point[0]
   goal.pose.position.y = point[1] 
-  goal.pose.position.z = point[2]
+  goal.pose.position.z = point[2]-0.001
   
   #Orientation as a quaternion
   goal.pose.orientation.x = 0.0
@@ -89,7 +89,7 @@ def main():
   bottom_right = calibration_coords[1]
   # This constant represents how far above the paper (in z coordinates) the end effector should be when
   # is is not drawing a curve.
-  gap = -0.05
+  gap = 0.05
 
   # Load the path which dictates the image we should draw.
   with open('path.pickle', 'rb') as handle:
@@ -119,9 +119,9 @@ def main():
   right_arm.set_planner_id('RRTConnectkConfigDefault')
   right_arm.set_planning_time(10)
   right_gripper = robot_gripper.Gripper('right')
-  print('Calibrating...')
-  right_gripper.calibrate()
-  rospy.sleep(2.0)
+  # print('Calibrating...')
+  # right_gripper.calibrate()
+  # rospy.sleep(2.0)
 
   ##########################################################################################################
   #Direct the arm to a neutral position above the paper ----------------------------------------------------
@@ -130,9 +130,9 @@ def main():
   goal_1.header.frame_id = "base"
 
   #x, y, and z position
-  goal_1.pose.position.x = top_left[0]
-  goal_1.pose.position.y = top_left[1]
-  goal_1.pose.position.z = top_left[1] + gap # clearly raise it above the paper
+  goal_1.pose.position.x = bottom_right[0]
+  goal_1.pose.position.y = bottom_right[1]
+  goal_1.pose.position.z = bottom_right[2] + gap # clearly raise it above the paper
   
   #Orientation as a quaternion
   goal_1.pose.orientation.x = 0.0
@@ -157,10 +157,10 @@ def main():
   #Give the robot the gripper (comment if already done) ----------------------------------------------------
   ##########################################################################################################
 
-  #Open the right gripper
-  print('Opening...')
-  right_gripper.open()
-  rospy.sleep(1.0)
+  # #Open the right gripper
+  # print('Opening...')
+  # right_gripper.open()
+  # rospy.sleep(1.0)
 
   raw_input('Place the block in the gripper and then press <Enter> to grip the block...')
 
@@ -181,7 +181,7 @@ def main():
       move_to_point(right_arm, point)
     last_point = list(path[-1])
     last_point[2] += gap
-    move_to_point(right_arm, point, wait = False)
+    move_to_point(right_arm, last_point, wait = False)
 
 if __name__ == '__main__':
   main()

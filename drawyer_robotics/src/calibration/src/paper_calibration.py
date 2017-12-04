@@ -11,10 +11,10 @@ def get_paper_corners():
     bottom_right = get_marker_pos()
     print("Got bottom right coordinates: {}".format(bottom_right))
 
-    if top_left[0] <= bottom_right[0]:
-       raise Exception("ERROR: top_left x-coord must be greater than bottom_right x-coord.")
-    if top_left[1] <= bottom_right[1]:
-       raise Exception("ERROR: top_left y-coord must be greater than bottom_right y-coord.")
+    # if top_left[0] <= bottom_right[0]:
+    #    raise Exception("ERROR: top_left x-coord must be greater than bottom_right x-coord.")
+    # if top_left[1] <= bottom_right[1]:
+    #    raise Exception("ERROR: top_left y-coord must be greater than bottom_right y-coord.")
     if abs(top_left[2] - bottom_right[2]) > 0.05:
        raise Exception("ERROR: top_left z-coord must be close (<5cm) to bottom_right z-coord.")
 

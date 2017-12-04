@@ -3,7 +3,7 @@ import rospy
 import tf2_ros
 import numpy as np
 
-def get_marker_pos(marker_length=0.15):
+def get_marker_pos(marker_length=0.19):
     rospy.init_node("tf_listener")
 
     buf = tf2_ros.Buffer()
@@ -18,6 +18,8 @@ def get_marker_pos(marker_length=0.15):
 
     translation = tform.transform.translation
     translation = np.array([translation.x, translation.y, translation.z])
+
+    # return translation
 
     q = tform.transform.rotation
     q = np.array([q.x, q.y, q.z, q.w])
@@ -36,7 +38,7 @@ def get_marker_pos(marker_length=0.15):
 
     marker_transform = np.array([[1, 0, 0, 0],
                                 [0, 1, 0, 0],
-                                [0, 0, 1, -marker_length],
+                                [0, 0, 1, marker_length],
                                 [0, 0, 0, 1]])
 
     marker_coords = np.matmul(wrist_coords, marker_transform)
