@@ -12,7 +12,7 @@ def get_marker_pos(marker_length=0.15):
     rospy.sleep(1.0)
 
     try:
-        tform = buf.lookup_transform('reference/right_gripper', 'reference/base', rospy.Time(0), timeout=rospy.Duration(4))
+        tform = buf.lookup_transform('base', 'right_gripper', rospy.Time(0), timeout=rospy.Duration(4))
     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
         return e
 
@@ -39,9 +39,9 @@ def get_marker_pos(marker_length=0.15):
                                 [0, 0, 1, -marker_length],
                                 [0, 0, 0, 1]])
 
-    marker_coords = np.matmul(wrist_coords, marker_transform)    
+    marker_coords = np.matmul(wrist_coords, marker_transform)
 
-    return marker_coords[:3, 3]
+    return marker_coords[:3, 3] + [0, 0, marker_length]
 
 
 if __name__ == "__main__":
