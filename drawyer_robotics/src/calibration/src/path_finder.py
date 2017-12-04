@@ -3,27 +3,27 @@ from skimage.filters import threshold_adaptive
 import cv2, pdb
 import math
 import pickle
- 
+
 def order_points(pts):
   # Initialize a list of coordinates that will be ordered
   # such that the first entry in the list is the top-left,
   # the second entry is the top-right, the third is the
   # bottom-right, and the fourth is the bottom-left.
   rect = np.zeros((4, 2), dtype = "float32")
- 
+
   # The top-left point will have the smallest sum, whereas
   # the bottom-right point will have the largest sum.
   s = pts.sum(axis = 1)
   rect[0] = pts[np.argmin(s)]
   rect[2] = pts[np.argmax(s)]
- 
+
   # Now, compute the difference between the points. the
   # top-right point will have the smallest difference,
   # whereas the bottom-left will have the largest difference.
   diff = np.diff(pts, axis = 1)
   rect[1] = pts[np.argmin(diff)]
   rect[3] = pts[np.argmax(diff)]
- 
+
   # Return the ordered coordinates.
   return rect
 
@@ -35,21 +35,21 @@ def four_point_transform(image, pts):
   # individually.
   rect = order_points(pts)
   (tl, tr, br, bl) = rect
- 
+
   # Compute the width of the new image, which will be the
   # maximum distance between bottom-right and bottom-left
   # x-coordiates or the top-right and top-left x-coordinates.
   widthA = np.sqrt(((br[0] - bl[0]) ** 2) + ((br[1] - bl[1]) ** 2))
   widthB = np.sqrt(((tr[0] - tl[0]) ** 2) + ((tr[1] - tl[1]) ** 2))
   maxWidth = max(int(widthA), int(widthB))
- 
+
   # Compute the height of the new image, which will be the
   # maximum distance between the top-right and bottom-right
   # y-coordinates or the top-left and bottom-left y-coordinates.
   heightA = np.sqrt(((tr[0] - br[0]) ** 2) + ((tr[1] - br[1]) ** 2))
   heightB = np.sqrt(((tl[0] - bl[0]) ** 2) + ((tl[1] - bl[1]) ** 2))
   maxHeight = max(int(heightA), int(heightB))
- 
+
   # Now that we have the dimensions of the new image, construct
   # the set of destination points to obtain a "birds eye view",
   # (i.e. top-down view) of the image, again specifying points
@@ -60,11 +60,11 @@ def four_point_transform(image, pts):
     [maxWidth - 1, 0],
     [maxWidth - 1, maxHeight - 1],
     [0, maxHeight - 1]], dtype = "float32")
- 
+
   # compute the perspective transform matrix and then apply it
   M = cv2.getPerspectiveTransform(rect, dst)
   warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
- 
+
   # return the warped image
   return warped
 
@@ -96,21 +96,21 @@ def image_to_binary_map(filepath, block_size, threshold_ratio):
 
   # find the contours in the edged image, keeping only the
   # largest ones, and initialize the screen contour
-  (cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+  (_, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
   cnts = sorted(cnts, key = cv2.contourArea, reverse = True)[:5]
-    
+
   # loop over the contours
   for c in cnts:
     # approximate the contour
     peri = cv2.arcLength(c, True)
     approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-    
+
     # if our approximated contour has four points, then we
     # can assume that we have found our screen
     if len(approx) == 4:
       screenCnt = approx
       break
-    
+
   # apply the four point transform to obtain a top-down
   # view of the original image
   # pdb.set_trace()
@@ -198,11 +198,11 @@ def find_connecting_block_helper(image, coords, block_size):
     if image[row][bottom_right[1]]:
       return (row, bottom_right[1])
   # South face of the square ring.
-  for col in range(top_left[1], bottom_right[1] + 1):
+  for col in range(bottom_right[1], top_left[1]-1, -1):
     if image[bottom_right[0]][col]:
       return (bottom_right[0], col)
   # West face of the square ring.
-  for row in range(top_left[0], bottom_right[0] + 1):
+  for row in range(bottom_right[0], top_left[0]-1, -1):
     if image[row][top_left[1]]:
       return (row, top_left[1])
   return None
@@ -262,7 +262,7 @@ def binary_map_to_path(image, block_size):
 
 
 
-binary_map = image_to_binary_map("spiral.jpg", 7, 0.4)
+binary_map = image_to_binary_map("test.jpg", 7, 0.4)
 printable = binary_map.copy()
 path = binary_map_to_path(binary_map, 3)
 
@@ -281,6 +281,9 @@ for p in path:
 
 for row in foo:
   print(''.join(row))
+
+print(len(path))
+print(path)
 
 with open('path.pickle', 'wb') as handle:
   pickle.dump(path, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -305,7 +308,7 @@ with open('paper_dimensions.pickle', 'wb') as handle:
 
   # (_, line_contours, _) = cv2.findContours(chunkified.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
   # line_contours = sorted(line_contours, key = cv2.contourArea, reverse = True)[1:10]
-  
+
   # foo = np.ones(chunkified.shape)*255
   # # pdb.set_trace()
   # # loop over the contours
@@ -313,7 +316,7 @@ with open('paper_dimensions.pickle', 'wb') as handle:
   #   # approximate the contour
   #   peri = cv2.arcLength(c, True)
   #   approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-    
+
   #   cv2.drawContours(foo, c, -1, (0, 255, 0), .2)
 
   # find the contours in the edged image, keeping only the
